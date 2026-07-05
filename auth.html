@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ '登录' if mode == 'login' else '注册' }} — HSEC Agent</title>
+<style>
+:root{--bg:#0a0e17;--card:#111827;--border:#1e2d3d;--accent:#00d4ff;--dim:#0099cc;--ok:#00ff88;--text:#e0e0e0;--muted:#607d8b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:400px;max-width:90vw}
+.auth-box h1{color:var(--accent);font-size:24px;margin-bottom:8px;text-align:center}
+.auth-box p{text-align:center;color:var(--muted);margin-bottom:24px;font-size:14px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+.form-group input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:15px}
+.form-group input:focus{border-color:var(--accent);outline:none}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--bg);transition:.3s}
+.btn:hover{background:var(--ok)}
+.error{color:#ff3366;font-size:13px;text-align:center;margin-top:12px}
+.switch{text-align:center;margin-top:20px;color:var(--muted);font-size:14px}
+.switch a{color:var(--accent)}
+.logo{text-align:center;margin-bottom:20px;font-size:28px}
+</style>
+</head>
+<body>
+<div class="auth-box">
+<div class="logo">⚛️</div>
+<h1>{{ '登录 HSEC Agent' if mode == 'login' else '注册 HSEC Agent' }}</h1>
+<p>{{ '欢迎回来' if mode == 'login' else '免费开始，每天3次分析' }}</p>
+<form id="authForm">
+{% if mode == 'register' %}
+<div class="form-group">
+<label>姓名（可选）</label>
+<input type="text" name="name" placeholder="你的名字">
+</div>
+{% endif %}
+<div class="form-group">
+<label>邮箱</label>
+<input type="email" name="email" placeholder="your@email.com" required>
+</div>
+<div class="form-group">
+<label>密码</label>
+<input type="password" name="password" placeholder="至少6位" required minlength="6">
+</div>
+<button type="submit" class="btn">{{ '登录' if mode == 'login' else '注册' }} →</button>
+<div class="error" id="error"></div>
+</form>
+<div class="switch">
+{% if mode == 'login' %}
+还没有账号？<a href="/register">免费注册</a>
+{% else %}
+已有账号？<a href="/login">登录</a>
+{% endif %}
+</div>
+</div>
+<script>
+document.getElementById('authForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const form = e.target;
+const data = {};
+new FormData(form).forEach((v, k) => data[k] = v);
+const url = form.querySelector('button').textContent.includes('登录') ? '/login' : '/register';
+try {
+const resp = await fetch(url, {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify(data)
+});
+const result = await resp.json();
+if (result.error) {
+document.getElementById('error').textContent = result.error;
+} else if (result.redirect) {
+window.location.href = result.redirect;
+}
+} catch(err) {
+document.getElementById('error').textContent = '网络错误，请重试';
+}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+#!/bin/bash
+# 腾讯云SCF启动文件
+# Web函数监听端口必须为9000
+
+cd /var/lang/python3/bin 2>/dev/null || true
+
+python3 app.py

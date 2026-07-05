@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSEC Agent — 智能网络分析助手</title>
+<style>
+:root{--bg:#0a0e17;--card:#111827;--hover:#1a2332;--border:#1e2d3d;--accent:#00d4ff;--dim:#0099cc;--ok:#00ff88;--warn:#ffaa00;--bad:#ff3366;--text:#e0e0e0;--muted:#607d8b;--bright:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh}
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+.header h1{color:var(--accent);font-size:18px}
+.header .badge{background:var(--dim);color:var(--bg);padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
+.chat-area{flex:1;overflow-y:auto;padding:24px;max-width:900px;margin:0 auto;width:100%}
+.msg{margin-bottom:16px;max-width:80%}
+.msg.user{margin-left:auto}
+.msg-bubble{padding:14px 18px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap}
+.msg.user .msg-bubble{background:var(--accent);color:var(--bg);border-bottom-right-radius:4px}
+.msg.assistant .msg-bubble{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg.assistant .msg-bubble h3{color:var(--accent);margin-bottom:8px}
+.msg.assistant .msg-bubble .metric{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}
+.msg.assistant .msg-bubble .metric .val{color:var(--accent);font-weight:600}
+.msg.assistant .msg-bubble .phase-badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700;margin:4px 0}
+.msg.assistant .msg-bubble .phase-badge.ok{background:rgba(0,255,136,.15);color:var(--ok)}
+.msg.assistant .msg-bubble .phase-badge.bad{background:rgba(255,51,102,.15);color:var(--bad)}
+.msg.assistant .msg-bubble .hsec-data{background:rgba(0,212,255,.05);border:1px solid var(--border);border-radius:8px;padding:12px;margin:8px 0}
+.msg.assistant .msg-bubble .hidden-risk{background:rgba(255,51,102,.1);border-left:3px solid var(--bad);padding:6px 10px;margin:4px 0;border-radius:4px;font-size:13px}
+.input-area{background:var(--card);border-top:1px solid var(--border);padding:16px 24px}
+.input-box{max-width:900px;margin:0 auto;display:flex;gap:12px}
+.input-box input{flex:1;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
+.input-box input:focus{border-color:var(--accent)}
+.input-box button{padding:12px 24px;background:var(--accent);color:var(--bg);border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px}
+.input-box button:hover{background:var(--ok)}
+.input-box button:disabled{opacity:.5;cursor:not-allowed}
+.suggestions{max-width:900px;margin:0 auto 12px;display:flex;gap:8px;flex-wrap:wrap}
+.suggestion{padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--muted);cursor:pointer;transition:.3s}
+.suggestion:hover{border-color:var(--accent);color:var(--accent)}
+.typing{display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%;animation:bounce 1s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>⚛️ HSEC Agent</h1>
+<span class="badge">LLM + 物理引擎</span>
+</div>
+
+<div class="chat-area" id="chatArea">
+<div class="msg assistant">
+<div class="msg-bubble">
+<h3>你好，我是HSEC Agent</h3>
+<p>我有两个大脑：</p>
+<p>🧠 <strong>LLM大脑</strong>：理解你的需求，用自然语言跟你交流</p>
+<p>⚛️ <strong>HSEC物理引擎</strong>：对任何网络做4项独有物理预测</p>
+<p style="margin-top:8px">你可以说：</p>
+<p>• "帮我分析全球银行网络的系统性风险"</p>
+<p>• "这个脑网络有没有阿尔茨海默病的早期信号"</p>
+<p>• "分析一下半导体供应链哪里最脆弱"</p>
+<p>• "这些推理链哪些是幻觉"</p>
+</div>
+</div>
+</div>
+
+<div class="suggestions">
+<span class="suggestion" onclick="sendMsg('分析全球银行网络的系统性风险')">💰 分析银行网络</span>
+<span class="suggestion" onclick="sendMsg('分析半导体供应链的脆弱环节')">📦 分析供应链</span>
+<span class="suggestion" onclick="sendMsg('脑网络有没有AD早期信号')">🧠 分析脑网络</span>
+<span class="suggestion" onclick="sendMsg('分析AI推理链的幻觉')">🤖 检测AI幻觉</span>
+<span class="suggestion" onclick="sendMsg('分析蛋白质网络的脆弱点')">🧬 分析蛋白质</span>
+<span class="suggestion" onclick="sendMsg('分析全球航线网络')">✈️ 分析航线</span>
+</div>
+
+<div class="input-area">
+<div class="input-box">
+<input type="text" id="msgInput" placeholder="用自然语言描述你想分析什么..." onkeypress="if(event.key==='Enter')sendBtn()">
+<button id="sendBtn" onclick="sendBtn()">发送</button>
+</div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const msgInput = document.getElementById('msgInput');
+const sendBtnEl = document.getElementById('sendBtn');
+
+function addMsg(role, content, isHTML=false) {
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if(isHTML) bubble.innerHTML = content;
+  else bubble.textContent = content;
+  msg.appendChild(bubble);
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  return bubble;
+}
+
+function addTyping() {
+  const msg = document.createElement('div');
+  msg.className = 'msg assistant';
+  msg.id = 'typingMsg';
+  msg.innerHTML = '<div class="msg-bubble"><span class="typing"></span> <span class="typing" style="animation-delay:.2s"></span> <span class="typing" style="animation-delay:.4s"></span> HSEC Agent思考中...</div>';
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingMsg');
+  if(t) t.remove();
+}
+
+function sendMsg(text) {
+  msgInput.value = text;
+  sendBtn();
+}
+
+function sendBtn() {
+  const text = msgInput.value.trim();
+  if(!text) return;
+  addMsg('user', text);
+  msgInput.value = '';
+  sendBtnEl.disabled = true;
+  addTyping();
+  
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({message: text})
+  })
+  .then(r => r.json())
+  .then(result => {
+    removeTyping();
+    sendBtnEl.disabled = false;
+    
+    if(result.type === 'analysis') {
+      let html = '';
+      
+      // Report
+      if(result.report) {
+        html += '<h3>📊 分析报告</h3>';
+        html += '<p>' + result.report.replace(/\n/g, '<br>') + '</p>';
+      }
+      
+      // HSEC data
+      if(result.hsec && !result.hsec.error) {
+        const h = result.hsec;
+        html += '<div class="hsec-data">';
+        html += '<div class="metric"><span>网络规模</span><span class="val">' + h.nodes + '节点 ' + h.edges + '边</span></div>';
+        html += '<div class="metric"><span>d_eff (有效码距)</span><span class="val">' + h.d_eff.toFixed(4) + '</span></div>';
+        html += '<div class="metric"><span>η (纠错效率)</span><span class="val">' + h.eta_pct.toFixed(1) + '%</span></div>';
+        html += '<div class="metric"><span>距d₀=12相变点</span><span class="val">' + h.distance_to_d0.toFixed(4) + '</span></div>';
+        
+        const phaseClass = h.phase === 'CORRECTABLE' ? 'ok' : 'bad';
+        const phaseText = h.phase === 'CORRECTABLE' ? '✅ 可纠错相' : '⚠️ 不可纠错相';
+        html += '<div class="phase-badge ' + phaseClass + '">' + phaseText + '</div>';
+        
+        html += '<div class="metric"><span>隐蔽风险节点</span><span class="val" style="color:var(--bad)">' + h.hidden_count + '个</span></div>';
+        
+        if(h.hidden_risks && h.hidden_risks.length > 0) {
+          html += '<div style="font-size:12px;color:var(--muted);margin:4px 0;">隐蔽风险详情:</div>';
+          h.hidden_risks.slice(0,5).forEach(r => {
+            html += '<div class="hidden-risk">⚠️ <strong>' + r.node + '</strong> — 曲率:' + r.curvature.toFixed(4) + ' | 介数:' + r.betweenness.toFixed(6) + '</div>';
+          });
+        }
+        
+        html += '<div class="metric"><span>因果锥外(信息不可达)</span><span class="val">' + h.causal_outside + '个</span></div>';
+        html += '<div class="metric"><span>临界失效比例</span><span class="val" style="color:var(--warn)">' + h.critical_removal_pct.toFixed(1) + '%</span></div>';
+        html += '</div>';
+      }
+      
+      addMsg('assistant', html, true);
+    } else {
+      addMsg('assistant', result.response || '抱歉，出了点问题');
+    }
+  })
+  .catch(err => {
+    removeTyping();
+    sendBtnEl.disabled = false;
+    addMsg('assistant', '网络错误，请重试');
+  });
+}
+
+msgInput.focus();
+</script>
+</body>
+</html>

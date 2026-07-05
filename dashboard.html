@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSEC Agent — 控制台</title>
+<style>
+:root{--bg:#0a0e17;--card:#111827;--hover:#1a2332;--border:#1e2d3d;--accent:#00d4ff;--dim:#0099cc;--ok:#00ff88;--warn:#ffaa00;--bad:#ff3366;--text:#e0e0e0;--muted:#607d8b;--bright:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+.container{max-width:1400px;margin:0 auto;padding:24px}
+/* Nav */
+.nav{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;justify-content:space-between;align-items:center}
+.nav .logo{font-size:18px;font-weight:700;color:var(--accent)}
+.nav .user-area{display:flex;gap:16px;align-items:center;font-size:14px}
+.nav .credits{background:var(--border);padding:4px 12px;border-radius:12px;color:var(--muted)}
+.nav .credits .used{color:var(--accent)}
+.nav a.logout{color:var(--bad);font-size:13px}
+/* Layout */
+.main{display:grid;grid-template-columns:280px 1fr;gap:24px;padding:24px 0}
+.sidebar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;height:fit-content}
+.sidebar h3{color:var(--accent);font-size:14px;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.sidebar .menu-item{padding:8px 12px;border-radius:6px;cursor:pointer;margin-bottom:4px;font-size:14px;color:var(--muted)}
+.sidebar .menu-item:hover,.sidebar .menu-item.active{background:var(--hover);color:var(--accent)}
+/* Dataset grid */
+.section-title{font-size:20px;color:var(--bright);margin-bottom:16px}
+.dataset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.dataset-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:.3s}
+.dataset-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.dataset-card.active{border-color:var(--accent);background:var(--hover)}
+.dataset-card .domain{font-size:11px;color:var(--dim);text-transform:uppercase}
+.dataset-card .name{font-size:15px;color:var(--bright);margin:6px 0}
+.dataset-card .meta{font-size:12px;color:var(--muted)}
+/* Upload */
+.upload-zone{background:var(--card);border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;margin-bottom:24px;cursor:pointer}
+.upload-zone:hover{border-color:var(--accent)}
+.upload-zone h3{color:var(--accent);margin-bottom:8px}
+.upload-zone p{color:var(--muted);font-size:13px}
+/* Action */
+.action-bar{display:flex;gap:12px;margin-bottom:24px;align-items:center}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.3s}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{background:var(--ok)}
+.btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.btn-secondary{background:transparent;border:1px solid var(--dim);color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:12px}
+/* Results */
+.results{display:none}
+.results.active{display:block}
+.overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.overview-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.overview-card .label{font-size:12px;color:var(--muted);text-transform:uppercase}
+.overview-card .value{font-size:28px;color:var(--accent);font-weight:700;margin-top:4px}
+.overview-card .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.phase-banner{padding:16px;border-radius:10px;margin-bottom:24px;text-align:center;font-size:18px;font-weight:600}
+.phase-banner.correctable{background:rgba(0,255,136,.1);border:1px solid var(--ok);color:var(--ok)}
+.phase-banner.uncorrectable{background:rgba(255,51,102,.1);border:1px solid var(--bad);color:var(--bad)}
+.prediction-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.pred-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.pred-card h3{color:var(--accent);font-size:15px;margin-bottom:12px}
+.pred-card .tag{font-size:11px;background:var(--bad);color:var(--bright);padding:2px 8px;border-radius:8px;margin-left:8px}
+.pred-card .insight{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.metric-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.metric-row .label{color:var(--muted)}
+.metric-row .value{color:var(--accent)}
+.risk-item{background:rgba(255,51,102,.05);border-left:3px solid var(--bad);padding:8px 12px;margin-bottom:6px;border-radius:4px;font-size:13px}
+.risk-item .node{color:var(--bad);font-weight:600}
+/* Loading */
+.loading{display:none;text-align:center;padding:40px}
+.loading.active{display:block}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* History */
+.history-table{width:100%;border-collapse:collapse}
+.history-table th,.history-table td{padding:10px;text-align:left;border-bottom:1px solid var(--border);font-size:13px}
+.history-table th{color:var(--accent)}
+/* Plan info */
+.plan-info{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px}
+.plan-info h3{color:var(--accent);margin-bottom:12px}
+.plan-info .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.overview-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.overview-card .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.overview-card .value{font-size:28px;font-weight:700;color:var(--accent);margin:4px 0}
+.overview-card .sub{font-size:11px;color:var(--muted)}
+.plan-info .row .label{color:var(--muted)}
+.plan-info .row .value{color:var(--bright)}
+.upgrade-btn{margin-top:16px}
+/* API key */
+.api-key-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:13px;color:var(--ok);word-break:break-all;cursor:pointer}
+.api-key-box:hover{border-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="nav">
+<a href="/" class="logo">⚛️ HSEC Agent</a>
+<div class="user-area">
+<span class="credits">今日: <span class="used" id="creditsUsed">0</span>/<span id="creditsLimit">3</span></span>
+<span id="userName">用户</span>
+<span id="planBadge" style="padding:2px 10px;border-radius:10px;font-size:12px;background:var(--border);color:var(--muted)">免费版</span>
+<a href="/logout" class="logout">退出</a>
+</div>
+</div>
+
+<div class="container">
+<div class="main">
+<div class="sidebar">
+<h3>功能</h3>
+<div class="menu-item active" onclick="showSection('analyze')">🔬 分析网络</div>
+<div class="menu-item" onclick="showSection('chat')">💬 对话分析</div>
+<div class="menu-item" onclick="showSection('theory')">📐 理论检查</div>
+<div class="menu-item" onclick="showSection('history')">📋 历史记录</div>
+<div class="menu-item" onclick="showSection('monitor')">📊 监控面板</div>
+<div class="menu-item" onclick="showSection('physics')">⚛️ 物理引擎</div>
+<div class="menu-item" onclick="showSection('account')">👤 账户管理</div>
+<div class="menu-item" onclick="showSection('api')">🔌 API文档</div>
+
+<h3 style="margin-top:24px">内置数据集</h3>
+<div id="datasetList"></div>
+</div>
+
+<div class="content" style="flex:1">
+<!-- Analyze Section -->
+<div id="section-analyze">
+<h2 class="section-title">选择数据集或上传网络</h2>
+<div class="dataset-grid" id="datasetGrid"></div>
+
+<div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+<h3>📁 上传自定义网络 (CSV/JSON)</h3>
+<p>CSV: source,target,weight | JSON: {"nodes":[...], "edges":[...]}</p>
+<input type="file" id="fileInput" accept=".csv,.json" style="display:none" onchange="handleUpload(this)">
+</div>
+
+<div class="action-bar">
+<button class="btn btn-primary" id="analyzeBtn" onclick="runAnalysis()" disabled>运行 HSEC 分析</button>
+<span id="selectedInfo" style="color:var(--muted);font-size:14px"></span>
+</div>
+
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p id="loadingText">正在运行HSEC预测引擎...</p>
+</div>
+
+<div class="results" id="results">
+<div class="phase-banner" id="phaseBanner"></div>
+<div class="overview-grid" id="overviewGrid"></div>
+
+<div class="prediction-grid">
+<div class="pred-card">
+<h3>1. 相变阈值 <span class="tag">HSEC独有</span></h3>
+<div class="insight" id="phaseInsight"></div>
+<div id="phaseDetails"></div>
+</div>
+<div class="pred-card">
+<h3>2. 因果锥 <span class="tag">HSEC独有</span></h3>
+<div class="insight" id="causalInsight"></div>
+<div id="causalDetails"></div>
+</div>
+<div class="pred-card">
+<h3>3. 纠缠曲率奇点 <span class="tag">HSEC独有</span></h3>
+<div class="insight" id="curvInsight"></div>
+<div id="curvDetails"></div>
+</div>
+<div class="pred-card">
+<h3>4. 临界失效规模 <span class="tag">HSEC独有</span></h3>
+<div class="insight" id="failInsight"></div>
+<div id="failDetails"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- History Section -->
+<div id="section-history" style="display:none">
+<h2 class="section-title">分析历史</h2>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;overflow-x:auto">
+<table class="history-table">
+<thead><tr><th>时间</th><th>名称</th><th>节点</th><th>边</th><th>d_eff</th><th>η</th><th>相态</th><th>隐蔽风险</th><th>临界%</th></tr></thead>
+<tbody id="historyBody"></tbody>
+</table>
+</div>
+</div>
+
+<!-- Account Section -->
+<div id="section-account" style="display:none">
+<h2 class="section-title">账户管理</h2>
+<div class="plan-info">
+<h3>当前套餐</h3>
+<div class="row"><span class="label">套餐</span><span class="value" id="planName">免费版</span></div>
+<div class="row"><span class="label">每日额度</span><span class="value" id="planLimit">3次/天</span></div>
+<div class="row"><span class="label">已用</span><span class="value" id="planUsed">0次</span></div>
+<div class="row"><span class="label">到期时间</span><span class="value" id="planUntil">—</span></div>
+<div class="row"><span class="label">注册时间</span><span class="value" id="planCreated">—</span></div>
+</div>
+
+<div class="plan-info">
+<h3>升级套餐</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+<div style="border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center">
+<h4 style="color:var(--accent)">个人版</h4>
+<div style="font-size:32px;color:var(--accent);font-weight:700;margin:8px 0">¥99/月</div>
+<p style="color:var(--muted);font-size:13px">每天200次+API+上传+对话+理论检查</p>
+<button class="btn btn-primary btn-sm upgrade-btn" onclick="upgrade('personal')">升级个人版</button>
+</div>
+<div style="border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center">
+<h4 style="color:var(--accent)">机构版</h4>
+<div style="font-size:32px;color:var(--accent);font-weight:700;margin:8px 0">¥9999/月</div>
+<p style="color:var(--muted);font-size:13px">无限次+团队+批量API+私有部署</p>
+<button class="btn btn-primary btn-sm upgrade-btn" onclick="upgrade('institution')">升级机构版</button>
+</div>
+</div>
+</div>
+
+<div class="plan-info">
+<h3>个人资料</h3>
+<div class="row"><span class="label">昵称</span><input type="text" id="profileName" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:14px;width:200px"></div>
+<div class="row"><span class="label">邮箱</span><input type="text" id="profileEmail" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:14px;width:240px" readonly></div>
+<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="updateProfile()">保存资料</button>
+</div>
+
+<div class="plan-info">
+<h3>修改密码</h3>
+<div class="row"><span class="label">旧密码</span><input type="password" id="oldPassword" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:14px;width:200px"></div>
+<div class="row"><span class="label">新密码</span><input type="password" id="newPassword" placeholder="至少6位" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:14px;width:200px"></div>
+<button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="changePassword()">修改密码</button>
+</div>
+</div>
+
+<!-- API Section -->
+<div id="section-api" style="display:none">
+<h2 class="section-title">API 文档</h2>
+<div class="plan-info">
+<h3>你的API Key</h3>
+<div class="api-key-box" id="apiKeyBox" onclick="copyApiKey()">点击复制</div>
+</div>
+<div class="plan-info">
+<h3>API 调用示例</h3>
+<pre style="background:var(--bg);padding:16px;border-radius:8px;font-size:13px;color:var(--ok);overflow-x:auto"><code># 获取分析结果
+curl "https://api.hsec-agent.com/api/analyze?dataset=financial&api_key=YOUR_API_KEY"
+
+# 返回JSON
+{
+  "phase_transition": {
+    "d_eff_current": 6.76,
+    "eta": 0.431,
+    "phase": "UNCORRECTABLE"
+  },
+  "curvature_singularities": {
+    "hidden_risks": [...]
+  },
+  ...
+}</code></pre>
+</div>
+<div class="plan-info">
+<h3>支持的内置数据集</h3>
+<div id="apiDatasetList" style="font-size:13px;color:var(--muted);line-height:2"></div>
+</div>
+</div>
+
+<!-- Chat Section -->
+<div id="section-chat" style="display:none">
+<h2 class="section-title">对话式分析</h2>
+<div class="plan-info">
+<h3>用自然语言分析网络</h3>
+<p style="color:var(--muted);font-size:14px;margin-bottom:16px">输入需求，AI理解后自动选择数据集并运行HSEC分析。</p>
+<div id="chatMessages" style="max-height:400px;overflow-y:auto;margin-bottom:16px"></div>
+<div style="display:flex;gap:8px">
+<input type="text" id="chatInput" placeholder="例: 帮我分析银行风险" style="flex:1;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px" onkeypress="if(event.key==='Enter')sendChat()">
+<button class="btn btn-primary" onclick="sendChat()">发送</button>
+</div>
+</div>
+</div>
+
+<!-- Theory Check Section -->
+<div id="section-theory" style="display:none">
+<h2 class="section-title">理论自洽性检查</h2>
+<div class="plan-info">
+<h3>上传理论命题依赖网络</h3>
+<p style="color:var(--muted);font-size:14px;margin-bottom:16px">输入你的理论命题和依赖关系，HSEC检查理论网络的自洽性、隐蔽风险和临界失效。</p>
+<h4 style="color:var(--accent);margin-bottom:8px">命题列表 (JSON)</h4>
+<textarea id="theoryProps" style="width:100%;height:120px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:monospace" placeholder='[{"id":"A","desc":"公理A","chapter":"1"},{"id":"B","desc":"定理B","chapter":"2"}]'></textarea>
+<h4 style="color:var(--accent);margin:8px 0">依赖关系 (JSON)</h4>
+<textarea id="theoryDeps" style="width:100%;height:80px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:monospace" placeholder='[{"source":"A","target":"B","weight":0.5}]'></textarea>
+<div style="margin-top:8px">
+<input type="text" id="theoryName" placeholder="理论名称" style="padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;margin-right:8px">
+<button class="btn btn-primary" onclick="runTheoryCheck()">检查</button>
+<button class="btn btn-secondary" onclick="loadPaperExample()" style="margin-left:8px">加载论文示例</button>
+</div>
+<div id="theoryResult" style="margin-top:16px"></div>
+</div>
+</div>
+
+<!-- Monitor Section -->
+<div id="section-monitor" style="display:none">
+<h2 class="section-title">监控面板</h2>
+<div id="monitorContent"><p style="color:var(--muted)">点击加载...</p></div>
+</div>
+
+<!-- Physics Section -->
+<div id="section-physics" style="display:none">
+<h2 class="section-title">物理引擎</h2>
+<div id="physicsContent"><p style="color:var(--muted)">点击加载...</p></div>
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+let selectedDataset = null;
+let uploadedData = null;
+
+async function loadUser() {
+const resp = await fetch('/api/me');
+if (!resp.ok) { window.location.href = '/login'; return; }
+const user = await resp.json();
+document.getElementById('userName').textContent = user.name || user.email;
+document.getElementById('creditsUsed').textContent = user.credits_used;
+document.getElementById('creditsLimit').textContent = user.credits_limit;
+const planNames = {free:'免费版', personal:'个人版', institution:'机构版'};
+const planColors = {free:'var(--muted)', personal:'var(--ok)', institution:'var(--accent)'};
+document.getElementById('planBadge').textContent = planNames[user.plan];
+document.getElementById('planBadge').style.color = planColors[user.plan];
+document.getElementById('apiKeyBox').textContent = user.api_key;
+document.getElementById('planName').textContent = planNames[user.plan];
+document.getElementById('planLimit').textContent = user.credits_limit + '次/天';
+document.getElementById('planUsed').textContent = user.credits_used + '次';
+document.getElementById('planUntil').textContent = user.paid_until || '永久';
+document.getElementById('planCreated').textContent = user.created_at || '—';
+// Fill profile form
+const pn = document.getElementById('profileName');
+const pe = document.getElementById('profileEmail');
+if (pn) pn.value = user.name || '';
+if (pe) pe.value = user.email || '';
+}
+
+async function loadDatasets() {
+const resp = await fetch('/api/datasets');
+const datasets = await resp.json();
+const grid = document.getElementById('datasetGrid');
+const sidebar = document.getElementById('datasetList');
+const apiList = document.getElementById('apiDatasetList');
+grid.innerHTML = '';
+sidebar.innerHTML = '';
+apiList.innerHTML = '';
+for (const [id, ds] of Object.entries(datasets)) {
+grid.innerHTML += `<div class="dataset-card" onclick="selectDataset('${id}', this)"><div class="domain">${ds.domain}</div><div class="name">${ds.name}</div><div class="meta">${ds.nodes}节点 ${ds.edges}边</div></div>`;
+sidebar.innerHTML += `<div class="menu-item" onclick="selectDataset('${id}'); showSection('analyze')">${ds.name}</div>`;
+apiList.innerHTML += `<span style="display:inline-block;background:var(--bg);padding:4px 10px;border-radius:6px;margin:2px">${id}</span> `;
+}
+}
+
+function selectDataset(id, el) {
+selectedDataset = id;
+uploadedData = null;
+document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('active'));
+if (el) el.classList.add('active');
+document.getElementById('analyzeBtn').disabled = false;
+fetch('/api/datasets').then(r=>r.json()).then(datasets => {
+const ds = datasets[id];
+document.getElementById('selectedInfo').textContent = `已选择: ${ds.name} (${ds.nodes}节点 ${ds.edges}边)`;
+});
+}
+
+async function handleUpload(input) {
+const file = input.files[0];
+if (!file) return;
+const formData = new FormData();
+formData.append('file', file);
+document.getElementById('loading').classList.add('active');
+document.getElementById('loadingText').textContent = '正在上传并分析...';
+try {
+const resp = await fetch('/api/upload', {method: 'POST', body: formData});
+const result = await resp.json();
+if (result.error) {
+alert(result.error);
+} else {
+displayResults(result);
+}
+} catch(e) {
+alert('上传失败');
+}
+document.getElementById('loading').classList.remove('active');
+}
+
+async function runAnalysis() {
+document.getElementById('loading').classList.add('active');
+document.getElementById('loadingText').textContent = '正在运行HSEC 4项预测...';
+document.getElementById('results').classList.remove('active');
+await new Promise(r => setTimeout(r, 100));
+try {
+const resp = await fetch('/api/analyze', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({dataset_id: selectedDataset, name: selectedDataset})
+});
+const result = await resp.json();
+if (result.error) {
+alert(result.error);
+} else {
+displayResults(result);
+loadUser(); // Refresh credits
+}
+} catch(e) {
+alert('分析失败: ' + e.message);
+}
+document.getElementById('loading').classList.remove('active');
+}
+
+function displayResults(r) {
+const pt = r.phase_transition;
+const cc = r.causal_cone;
+const cs = r.curvature_singularities;
+const cf = r.critical_failure;
+const phase = pt.phase;
+document.getElementById('phaseBanner').className = 'phase-banner ' + (phase === 'CORRECTABLE' ? 'correctable' : 'uncorrectable');
+document.getElementById('phaseBanner').textContent = phase === 'CORRECTABLE' ? `✅ 可纠错相 — d_eff=${pt.d_eff_current} > d₀=12, 网络有自我修复能力` : `❌ 不可纠错相 — d_eff=${pt.d_eff_current} < d₀=12, 网络失去纠错能力`;
+document.getElementById('overviewGrid').innerHTML = `
+<div class="overview-card"><div class="label">节点</div><div class="value">${r.dataset_info.nodes}</div></div>
+<div class="overview-card"><div class="label">边</div><div class="value">${r.dataset_info.edges}</div></div>
+<div class="overview-card"><div class="label">d_eff</div><div class="value">${pt.d_eff_current}</div><div class="sub">d₀=12</div></div>
+<div class="overview-card"><div class="label">η (纠错效率)</div><div class="value">${pt.eta_pct}%</div></div>
+`;
+document.getElementById('phaseInsight').textContent = `d_eff=${pt.d_eff_current}, 距d₀=12还有${pt.distance_to_d0.toFixed(2)}, η=${pt.eta_pct}%`;
+document.getElementById('phaseDetails').innerHTML = `<div class="metric-row"><span class="label">d_eff</span><span class="value">${pt.d_eff_current}</span></div><div class="metric-row"><span class="label">η</span><span class="value">${pt.eta_pct}%</span></div><div class="metric-row"><span class="label">相态</span><span class="value">${pt.phase_cn}</span></div>`;
+document.getElementById('causalInsight').textContent = `锥内${cc.inside_count} / 锥外${cc.outside_count}`;
+document.getElementById('causalDetails').innerHTML = `<div class="metric-row"><span class="label">因果锥内</span><span class="value">${cc.inside_count}</span></div><div class="metric-row"><span class="label">因果锥外</span><span class="value">${cc.outside_count}</span></div>`;
+document.getElementById('curvInsight').textContent = `发现${cs.hidden_count}个隐蔽风险节点（标准介数100%漏检）`;
+document.getElementById('curvDetails').innerHTML = cs.hidden_risks.slice(0,10).map(h => `<div class="risk-item"><span class="node">${h.node}</span> 曲率=${h.curvature} 介数=${h.betweenness}</div>`).join('') || '<div style="color:var(--muted);font-size:13px">未发现隐蔽风险节点</div>';
+document.getElementById('failInsight').textContent = `移除${cf.critical_pct}%节点后d_eff跌破d₀=12`;
+document.getElementById('failDetails').innerHTML = `<div class="metric-row"><span class="label">临界失效比例</span><span class="value">${cf.critical_pct}%</span></div>${cf.transition_point ? `<div class="metric-row"><span class="label">临界点</span><span class="value">移除${cf.transition_point.nodes_removed}个节点</span></div>` : ''}`;
+document.getElementById('results').classList.add('active');
+}
+
+function showSection(name) {
+document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+document.getElementById('section-' + name).style.display = 'block';
+document.querySelectorAll('.sidebar .menu-item').forEach(m => m.classList.remove('active'));
+if(event && event.target) event.target.classList.add('active');
+if (name === 'history') loadHistory();
+if (name === 'monitor') loadMonitor();
+if (name === 'physics') loadPhysics();
+}
+
+async function runTheoryCheck() {
+const propsText = document.getElementById('theoryProps').value.trim();
+const depsText = document.getElementById('theoryDeps').value.trim();
+const name = document.getElementById('theoryName').value || '理论检查';
+const el = document.getElementById('theoryResult');
+if (!propsText || !depsText) { el.innerHTML = '<p style="color:var(--bad)">请输入命题和依赖关系</p>'; return; }
+let props, deps;
+try { props = JSON.parse(propsText); deps = JSON.parse(depsText); }
+catch(e) { el.innerHTML = '<p style="color:var(--bad)">JSON格式错误: '+e.message+'</p>'; return; }
+el.innerHTML = '<p style="color:var(--muted)">检查中...</p>';
+const resp = await fetch('/api/v1/theory_check', {
+method:'POST', headers:{'Content-Type':'application/json','X-API-Key':window.API_KEY||''},
+body: JSON.stringify({propositions:props, dependencies:deps, name})
+});
+const d = await resp.json();
+if (d.error) { el.innerHTML = '<p style="color:var(--bad)">'+d.error+'</p>'; return; }
+let html = '<div class="overview-grid" style="margin-bottom:16px">';
+html += '<div class="overview-card"><div class="label">命题数</div><div class="value">'+d.theory_info.total_propositions+'</div></div>';
+html += '<div class="overview-card"><div class="label">依赖数</div><div class="value">'+d.theory_info.total_dependencies+'</div></div>';
+html += '<div class="overview-card"><div class="label">d_eff</div><div class="value">'+d.phase_transition.d_eff+'</div></div>';
+html += '<div class="overview-card"><div class="label">相态</div><div class="value" style="color:'+(d.phase_transition.phase==='CORRECTABLE'?'var(--ok)':'var(--bad)')+';font-size:14px">'+(d.phase_transition.phase==='CORRECTABLE'?'可纠错':'不可纠错')+'</div></div>';
+html += '</div>';
+html += '<div class="plan-info"><h3>核心命题</h3><table class="history-table"><tr><th>#</th><th>命题</th><th>章节</th><th>介数</th></tr>';
+d.core_propositions.slice(0,10).forEach((p,i) => {
+html += '<tr><td>'+(i+1)+'</td><td>'+(p.description||p.id)+'</td><td>'+p.chapter+'</td><td>'+p.betweenness+'</td></tr>';
+});
+html += '</table></div>';
+if (d.hidden_risks.length > 0) {
+html += '<div class="plan-info"><h3 style="color:var(--bad)">⚠️ 隐蔽风险命题 ('+d.hidden_risk_count+'个)</h3>';
+d.hidden_risks.forEach(h => {
+html += '<div class="metric-row"><span class="label" style="color:var(--bad)">⚠️ '+(h.description||h.id)+'</span><span class="value">曲率:'+h.curvature+' 介数:'+h.betweenness+'</span></div>';
+});
+html += '</div>';
+}
+html += '<div class="plan-info"><h3>临界失效</h3><div class="metric-row"><span class="label">临界比例</span><span class="value" style="color:var(--warn)">'+d.critical_failure.critical_pct+'%</span></div><div class="metric-row"><span class="label">结论</span><span class="value">'+d.critical_failure.interpretation+'</span></div></div>';
+html += '<div class="plan-info"><h3>因果锥</h3><div class="metric-row"><span class="label">逻辑可达</span><span class="value">'+d.causal_cone.inside+'</span></div><div class="metric-row"><span class="label">逻辑断裂</span><span class="value" style="color:'+(d.causal_cone.outside>0?'var(--bad)':'var(--ok)')+'">'+d.causal_cone.outside+'</span></div><div class="metric-row"><span class="label">结论</span><span class="value">'+d.causal_cone.interpretation+'</span></div></div>';
+el.innerHTML = html;
+loadUser();
+}
+
+function loadPaperExample() {
+document.getElementById('theoryProps').value = JSON.stringify([
+{'id':'Axiom1','desc':'公理1:纠缠定义空间','chapter':'1','type':'axiom'},
+{'id':'Axiom2','desc':'公理2:纠错维持光滑','chapter':'1','type':'axiom'},
+{'id':'HSEC','desc':'HSEC机制:d_eff=Area/ℓ_p²','chapter':'2','type':'mechanism'},
+{'id':'d0','desc':'d₀=12标定','chapter':'2','type':'calibration'},
+{'id':'Eta','desc':'η=1-exp(-d_eff/d₀)','chapter':'2','type':'formula'},
+{'id':'GRB','desc':'GRB零色散预言','chapter':'3','type':'prediction'},
+{'id':'GN','desc':'G_N=ℓ_p²c³/ℏ','chapter':'4','type':'derivation'},
+{'id':'Kappa','desc':'κ=π⁴/9','chapter':'5','type':'derivation'}
+], null, 2);
+document.getElementById('theoryDeps').value = JSON.stringify([
+{'source':'Axiom1','target':'HSEC','weight':0.5},
+{'source':'Axiom2','target':'HSEC','weight':0.5},
+{'source':'HSEC','target':'d0','weight':0.3},
+{'source':'HSEC','target':'Eta','weight':0.3},
+{'source':'d0','target':'GRB','weight':0.5},
+{'source':'Eta','target':'GRB','weight':0.5},
+{'source':'HSEC','target':'GN','weight':0.5},
+{'source':'HSEC','target':'Kappa','weight':0.5}
+], null, 2);
+document.getElementById('theoryName').value = 'HSEC论文理论检查';
+}
+
+async function sendChat() {
+const input = document.getElementById('chatInput');
+const msg = input.value.trim();
+if (!msg) return;
+input.value = '';
+const msgs = document.getElementById('chatMessages');
+msgs.innerHTML += `<div style="background:var(--hover);padding:10px;border-radius:8px;margin-bottom:8px;margin-left:40px"><b>你:</b> ${msg}</div>`;
+msgs.innerHTML += `<div id="typing" style="color:var(--muted);padding:10px">HSEC Agent思考中...</div>`;
+msgs.scrollTop = msgs.scrollHeight;
+try {
+const resp = await fetch('/api/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+const result = await resp.json();
+document.getElementById('typing').remove();
+if (result.type === 'analysis') {
+const h = result.hsec;
+let html = `<div style="background:var(--card);border:1px solid var(--accent);padding:12px;border-radius:8px;margin-bottom:8px"><b>HSEC Agent:</b><br>${result.report}<br><br>`;
+html += `<div style="font-size:13px;border-top:1px solid var(--border);padding-top:8px;margin-top:8px">`;
+html += `<b>数据集:</b> ${result.dataset_name}<br>`;
+html += `<b>d_eff:</b> ${h.d_eff} | <b>η:</b> ${h.eta_pct}% | <b>相态:</b> ${h.phase==='CORRECTABLE'?'可纠错':'不可纠错'}<br>`;
+html += `<b>隐蔽风险:</b> ${h.hidden_risks}个 | <b>临界失效:</b> ${h.critical_pct}%<br>`;
+if (h.hidden_nodes && h.hidden_nodes.length > 0) {
+html += `<b>风险节点:</b> `;
+html += h.hidden_nodes.map(n=>n.node).join(', ');
+}
+html += `</div></div>`;
+msgs.innerHTML += html;
+} else {
+msgs.innerHTML += `<div style="background:var(--card);padding:10px;border-radius:8px;margin-bottom:8px"><b>HSEC Agent:</b> ${result.response||result.error||'出错了'}</div>`;
+}
+msgs.scrollTop = msgs.scrollHeight;
+loadUser();
+} catch(e) {
+document.getElementById('typing').remove();
+msgs.innerHTML += `<div style="color:var(--bad);padding:10px">网络错误</div>`;
+}
+}
+
+async function loadMonitor() {
+const el = document.getElementById('monitorContent');
+el.innerHTML = '<p style="color:var(--muted)">加载中...</p>';
+const resp = await fetch('/api/monitor');
+const d = await resp.json();
+let html = '<div class="overview-grid" style="margin-bottom:24px">';
+html += `<div class="overview-card"><div class="label">7天分析次数</div><div class="value">${d.usage.total_analyses_7d}</div></div>`;
+html += `<div class="overview-card"><div class="label">已用额度</div><div class="value">${d.usage.credits_used}/${d.usage.credits_limit}</div></div>`;
+html += `<div class="overview-card"><div class="label">可纠错</div><div class="value" style="color:var(--ok)">${d.statistics.correctable}</div></div>`;
+html += `<div class="overview-card"><div class="label">不可纠错</div><div class="value" style="color:var(--bad)">${d.statistics.uncorrectable}</div></div>`;
+html += '</div>';
+html += '<div class="plan-info"><h3>统计</h3>';
+html += `<div class="row"><span class="label">发现隐蔽风险总数</span><span class="value">${d.statistics.total_hidden_risks}</span></div>`;
+html += `<div class="row"><span class="label">平均d_eff</span><span class="value">${d.statistics.avg_d_eff}</span></div>`;
+html += `<div class="row"><span class="label">平均η</span><span class="value">${d.statistics.avg_eta_pct}%</span></div>`;
+html += '</div>';
+html += '<div class="plan-info"><h3>最脆弱的网络</h3>';
+d.most_fragile.forEach(f => {
+html += `<div class="metric-row"><span class="label">${f.name}</span><span class="value" style="color:var(--bad)">d_eff=${f.d_eff?.toFixed(2)}</span></div>`;
+});
+html += '</div>';
+if (d.recent && d.recent.length > 0) {
+html += '<div class="plan-info"><h3>最近分析</h3><table class="history-table"><tr><th>时间</th><th>名称</th><th>d_eff</th><th>相态</th></tr>';
+d.recent.slice(0,5).forEach(r => {
+html += `<tr><td>${r.created_at}</td><td>${r.name}</td><td>${r.d_eff?.toFixed(2)}</td><td style="color:${r.phase==='CORRECTABLE'?'var(--ok)':'var(--bad)'}">${r.phase==='CORRECTABLE'?'可纠错':'不可纠错'}</td></tr>`;
+});
+html += '</table></div>';
+}
+el.innerHTML = html;
+}
+
+async function loadPhysics() {
+const el = document.getElementById('physicsContent');
+el.innerHTML = '<p style="color:var(--muted)">加载中...</p>';
+const [overview, predictions, scales] = await Promise.all([
+fetch('/api/physics/overview').then(r=>r.json()),
+fetch('/api/physics/predictions').then(r=>r.json()),
+fetch('/api/physics/scale_bridge').then(r=>r.json())
+]);
+let html = '<div class="overview-grid" style="margin-bottom:24px">';
+html += `<div class="overview-card"><div class="label">d₀</div><div class="value">${overview.d_0_exact.toFixed(4)}</div><div class="sub">≈12</div></div>`;
+html += `<div class="overview-card"><div class="label">κ (暗能量)</div><div class="value">${overview.kappa_theory.toFixed(4)}</div><div class="sub">观测=${overview.kappa_observed}</div></div>`;
+html += `<div class="overview-card"><div class="label">偏差</div><div class="value">${overview.kappa_deviation_pct.toFixed(2)}%</div></div>`;
+html += `<div class="overview-card"><div class="label">预言验证</div><div class="value" style="color:var(--ok)">${overview.predictions_verified}/${overview.predictions_total}</div></div>`;
+html += '</div>';
+html += '<div class="plan-info"><h3>9项可证伪预言</h3><table class="history-table"><tr><th>#</th><th>预言</th><th>值</th><th>数据源</th></tr>';
+predictions.predictions.forEach(p => {
+html += `<tr><td>${p.num}</td><td>${p.prediction}</td><td style="color:var(--ok)">${p.value}</td><td>${p.source}</td></tr>`;
+});
+html += '</table></div>';
+html += '<div class="plan-info"><h3>跨尺度η趋势</h3><table class="history-table"><tr><th>尺度</th><th>d_eff</th><th>η</th></tr>';
+scales.scales.forEach(s => {
+html += `<tr><td>${s.scale}</td><td>${s.d_eff}</td><td style="color:var(--accent)">${s.eta_pct}%</td></tr>`;
+});
+html += '</table></div>';
+html += `<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:16px">${overview.paper} | 作者: ${overview.author}</div>`;
+el.innerHTML = html;
+}
+
+async function loadHistory() {
+const resp = await fetch('/api/history');
+const history = await resp.json();
+const body = document.getElementById('historyBody');
+body.innerHTML = history.map(h => `<tr><td>${h.created_at}</td><td>${h.name}</td><td>${h.nodes}</td><td>${h.edges}</td><td>${h.d_eff?.toFixed(2)}</td><td>${(h.eta*100).toFixed(1)}%</td><td style="color:${h.phase==='CORRECTABLE'?'var(--ok)':'var(--bad)'}">${h.phase==='CORRECTABLE'?'可纠错':'不可纠错'}</td><td>${h.hidden_risks}</td><td>${h.critical_pct?.toFixed(1)}%</td></tr>`).join('');
+}
+
+async function upgrade(plan) {
+if (!confirm(`确定升级到${plan === 'personal' ? '个人版(¥99/月)' : '机构版(¥9999/月)'}？`)) return;
+const resp = await fetch('/api/upgrade', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({plan})});
+const result = await resp.json();
+if (result.success) {
+alert(`升级成功！套餐: ${plan}, 到期: ${result.paid_until}`);
+loadUser();
+} else {
+alert(result.error || '升级失败');
+}
+}
+
+function copyApiKey() {
+const key = document.getElementById('apiKeyBox').textContent;
+navigator.clipboard.writeText(key);
+document.getElementById('apiKeyBox').textContent = '已复制!';
+setTimeout(() => { loadUser(); }, 2000);
+}
+
+async function updateProfile() {
+const name = document.getElementById('profileName').value;
+const resp = await fetch('/api/profile', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+const result = await resp.json();
+if (result.success) { alert('资料已更新'); loadUser(); }
+else { alert(result.error || '更新失败'); }
+}
+
+async function changePassword() {
+const oldPwd = document.getElementById('oldPassword').value;
+const newPwd = document.getElementById('newPassword').value;
+if (!oldPwd || !newPwd) { alert('请填写完整'); return; }
+if (newPwd.length < 6) { alert('新密码至少6位'); return; }
+const resp = await fetch('/api/change_password', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password:oldPwd,new_password:newPwd})});
+const result = await resp.json();
+if (result.success) { alert('密码已修改'); document.getElementById('oldPassword').value=''; document.getElementById('newPassword').value=''; }
+else { alert(result.error || '修改失败'); }
+}
+
+loadUser();
+loadDatasets();
+</script>
+</body>
+</html>

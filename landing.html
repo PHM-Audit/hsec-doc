@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSEC Agent — 量子纠错网络预测引擎</title>
+<style>
+:root{--bg:#0a0e17;--card:#111827;--hover:#1a2332;--border:#1e2d3d;--accent:#00d4ff;--dim:#0099cc;--glow:rgba(0,212,255,.15);--ok:#00ff88;--warn:#ffaa00;--bad:#ff3366;--text:#e0e0e0;--muted:#607d8b;--bright:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--accent);text-decoration:none}
+.btn{display:inline-block;padding:10px 28px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:.3s;text-align:center}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{background:var(--ok);transform:translateY(-1px)}
+.btn-secondary{background:transparent;border:1px solid var(--dim);color:var(--accent)}
+.btn-secondary:hover{background:var(--dim);color:var(--bg)}
+.btn-sm{padding:6px 14px;font-size:13px;border-radius:6px}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+/* Hero */
+.hero{padding:80px 0 60px;text-align:center;background:linear-gradient(180deg,#0d1521 0%,var(--bg) 100%)}
+.hero h1{font-size:48px;color:var(--bright);margin-bottom:16px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:20px;color:var(--muted);max-width:700px;margin:0 auto 32px}
+.hero-buttons{display:flex;gap:16px;justify-content:center}
+.hero-badge{display:inline-block;background:var(--dim);color:var(--bg);padding:4px 16px;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:20px}
+/* Features */
+.features{padding:60px 0}
+.features h2{text-align:center;font-size:32px;color:var(--bright);margin-bottom:40px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;transition:.3s}
+.feature-card:hover{border-color:var(--accent);box-shadow:0 0 20px var(--glow)}
+.feature-card h3{color:var(--accent);font-size:18px;margin-bottom:12px}
+.feature-card p{color:var(--muted);font-size:14px}
+.feature-card .num{font-size:36px;color:var(--accent);font-weight:700;margin-bottom:8px}
+/* Pricing */
+.pricing{padding:60px 0;background:#0d1521}
+.pricing h2{text-align:center;font-size:32px;color:var(--bright);margin-bottom:40px}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:900px;margin:0 auto}
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center}
+.price-card.featured{border-color:var(--accent);box-shadow:0 0 30px var(--glow);position:relative}
+.price-card.featured::after{content:'推荐';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--bg);padding:4px 16px;border-radius:12px;font-size:12px;font-weight:700}
+.price-card h3{color:var(--bright);font-size:20px;margin-bottom:8px}
+.price-card .price{font-size:42px;color:var(--accent);font-weight:700;margin:16px 0}
+.price-card .price small{font-size:16px;color:var(--muted)}
+.price-card ul{list-style:none;text-align:left;margin:20px 0}
+.price-card li{padding:6px 0;color:var(--muted);font-size:14px}
+.price-card li::before{content:'✓ ';color:var(--ok)}
+/* Nav */
+nav{padding:16px 0;border-bottom:1px solid var(--border)}
+nav .container{display:flex;justify-content:space-between;align-items:center}
+nav .logo{font-size:20px;font-weight:700;color:var(--accent)}
+nav .links{display:flex;gap:20px;align-items:center}
+nav .links a{color:var(--muted);font-size:14px}
+nav .links a:hover{color:var(--accent)}
+/* Footer */
+footer{padding:40px 0;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:13px}
+/* Domains */
+.domains{padding:60px 0}
+.domains h2{text-align:center;font-size:32px;color:var(--bright);margin-bottom:40px}
+.domain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.domain-tag{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;font-size:13px;color:var(--accent)}
+.domain-tag:hover{border-color:var(--accent)}
+</style>
+</head>
+<body>
+<nav>
+<div class="container">
+<a href="/" class="logo">⚛️ HSEC Agent</a>
+<div class="links">
+<a href="/#features">功能</a>
+<a href="/#pricing">价格</a>
+<a href="/login">登录</a>
+<a href="/register" class="btn btn-sm btn-primary">免费注册</a>
+</div>
+</div>
+</nav>
+
+<div class="hero">
+<div class="container">
+<div class="hero-badge">d₀=12 拓扑不变量 · 35+领域验证 · 177个隐蔽风险节点</div>
+<h1>量子纠错网络<span>预测引擎</span></h1>
+<p>给任何网络数据，10秒内得到4项其他技术做不到的预测：相变阈值、因果锥、隐蔽风险节点、临界失效规模。</p>
+<div class="hero-buttons">
+<a href="/register" class="btn btn-primary">免费开始 →</a>
+<a href="/login" class="btn btn-secondary">已注册，登录</a>
+</div>
+</div>
+</div>
+
+<div class="features" id="features">
+<div class="container">
+<h2>4项独有预测 — 标准方法做不到</h2>
+<div class="feature-grid">
+<div class="feature-card">
+<div class="num">d₀=12</div>
+<h3>相变阈值预测</h3>
+<p>不检测已发生的故障，预测网络什么时候从"能自我修复"变成"修不了了"。物理常数，不是统计拟合。</p>
+</div>
+<div class="feature-card">
+<div class="num">exp(-d/d₀)</div>
+<h3>因果锥分析</h3>
+<p>不是"连不连通"，而是"信息能不能实际传到"。d_eff>d₀的路径被指数压制，实际不可达。</p>
+</div>
+<div class="feature-card">
+<div class="num">177</div>
+<h3>隐蔽风险发现</h3>
+<p>介数≈0但曲率极高的节点——标准方法100%漏检。HSEC从拓扑独立发现，已验证177个，覆盖42个领域。</p>
+</div>
+<div class="feature-card">
+<div class="num">1-7%</div>
+<h3>临界失效预测</h3>
+<p>精确预测移除几个节点后系统崩溃。比渗流阈值更早预警，给出更保守的安全边界。</p>
+</div>
+</div>
+
+<div class="feature-grid" style="margin-top:24px">
+<div class="feature-card">
+<h3>💬 对话式分析</h3>
+<p>用自然语言说"帮我分析银行风险"→AI理解→HSEC计算→生成报告。LLM大脑+物理引擎双脑协作。</p>
+</div>
+<div class="feature-card">
+<h3>📐 理论自洽性检查</h3>
+<p>上传任何理论体系的命题依赖网络，HSEC检查自洽性——发现隐蔽风险命题、定位最脆弱论证环节。</p>
+</div>
+<div class="feature-card">
+<h3>⚛️ 物理引擎API</h3>
+<p>9/9论文预言验证。d₀=11.89、κ=π⁴/9≈10.83、G_N=ℓ_p²c³/ℏ。跨尺度统一从量子芯片到宇宙。</p>
+</div>
+<div class="feature-card">
+<h3>⚙️ 自定义阈值</h3>
+<p>用户可调d₀和隐蔽风险阈值，做敏感性分析。批量对比多个网络的拓扑脆弱性。</p>
+</div>
+</div>
+</div>
+</div>
+
+<div class="domains">
+<div class="container">
+<h2>40个数据集 覆盖20+领域 — 同一个d₀=12</h2>
+<div class="domain-grid">
+<div class="domain-tag">🏦 金融风控</div>
+<div class="domain-tag">🧠 AD早筛</div>
+<div class="domain-tag">🧬 癌症药靶</div>
+<div class="domain-tag">📦 供应链</div>
+<div class="domain-tag">🤖 AI幻觉检测</div>
+<div class="domain-tag">⚡ 电力系统</div>
+<div class="domain-tag">🌍 气候临界点</div>
+<div class="domain-tag">🦠 流行病</div>
+<div class="domain-tag">🧪 免疫信号</div>
+<div class="domain-tag">🌿 生态食物网</div>
+<div class="domain-tag">⛓️ 区块链反洗钱</div>
+<div class="domain-tag">📚 知识图谱</div>
+<div class="domain-tag">🏢 组织管理</div>
+<div class="domain-tag">🚨 地震断层</div>
+<div class="domain-tag">💊 糖尿病</div>
+<div class="domain-tag">💓 心血管</div>
+<div class="domain-tag">🫁 COPD</div>
+<div class="domain-tag">🧠 帕金森</div>
+<div class="domain-tag">🔀 渐冻症ALS</div>
+<div class="domain-tag">😔 抑郁症</div>
+<div class="domain-tag">🦠 COVID-19</div>
+<div class="domain-tag">⏳ 衰老</div>
+<div class="domain-tag">🎓 教育</div>
+<div class="domain-tag">🚗 城市交通</div>
+<div class="domain-tag">🔒 网络安全</div>
+<div class="domain-tag">🌾 粮食安全</div>
+<div class="domain-tag">🌐 国际关系</div>
+<div class="domain-tag">💾 半导体制造</div>
+<div class="domain-tag">♻️ 能源转型</div>
+<div class="domain-tag">📊 更多领域...</div>
+</div>
+</div>
+</div>
+
+<div class="pricing" id="pricing">
+<div class="container">
+<h2>价格</h2>
+<div class="price-grid">
+<div class="price-card">
+<h3>免费版</h3>
+<div class="price">¥0<small>/月</small></div>
+<ul>
+<li>每天10次分析</li>
+<li>40个内置数据集，覆盖20+领域</li>
+<li>4项HSEC预测</li>
+<li>分析历史</li>
+</ul>
+<a href="/register" class="btn btn-secondary btn-sm">免费注册</a>
+</div>
+<div class="price-card featured">
+<h3>个人版</h3>
+<div class="price">¥99<small>/月</small></div>
+<ul>
+<li>每天200次分析</li>
+<li>API Key调用</li>
+<li>自定义数据上传</li>
+<li>对话式AI分析</li>
+<li>论文图表导出</li>
+<li>多网络对比</li>
+<li>理论自洽性检查</li>
+<li>自定义阈值分析</li>
+<li>优先支持</li>
+</ul>
+<a href="/register" class="btn btn-primary btn-sm">升级个人版</a>
+</div>
+<div class="price-card">
+<h3>机构版</h3>
+<div class="price">¥9999<small>/月</small></div>
+<ul>
+<li>无限次分析</li>
+<li>团队共享</li>
+<li>批量API调用</li>
+<li>定制数据集</li>
+<li>私有部署</li>
+<li>专属技术支持</li>
+</ul>
+<a href="/register" class="btn btn-secondary btn-sm">联系销售</a>
+</div>
+</div>
+</div>
+</div>
+
+<footer>
+<div class="container">
+<p>HSEC Agent | 理论: 刘双云《量子纠缠与量子纠错驱动的时空与规范场涌现》</p>
+<p>d₀≈12 | 9/9论文预言验证 | 15基准15/15达标 | 35+领域 | 177个隐蔽风险节点</p>
+</div>
+</footer>
+</body>
+</html>
